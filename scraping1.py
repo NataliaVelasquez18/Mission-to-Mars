@@ -1,33 +1,32 @@
-# Import Splinter, BeautifulSoup, and Pandas
+# Import Splinter BeautifulSoup Pandas WebDriverManager
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
-from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
+from webdriver_manager.chrome import ChromeDriverManager
 import datetime as dt
 
 
 def scrape_all():
     # Initiate headless driver for deployment
     executable_path = {'executable_path': ChromeDriverManager().install()}
-    browser = Browser('chrome', **executable_path, headless=True)
-
+    browser = Browser("chrome", executable_path="chromedriver", headless=True)
+   
     news_title, news_paragraph = mars_news(browser)
-    # Run all scraping functions and store results in a dictionary
+   # Run all scraping functions and store results in dictionary
     data = {
-        "news_title": news_title,
-        "news_paragraph": news_paragraph,
-        "featured_image": featured_image(browser),
-        "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+      "news_title": news_title,
+      "news_paragraph": news_paragraph,
+      "featured_image": featured_image(browser),
+      "facts": mars_facts(),
+      "last_modified": dt.datetime.now()
     }
     # Stop webdriver and return data
     browser.quit()
     return data
+    
 
 
 def mars_news(browser):
-
-    # Scrape Mars News
     # Visit the mars nasa news site
     url = 'https://mars.nasa.gov/news/'
     browser.visit(url)
@@ -41,30 +40,33 @@ def mars_news(browser):
 
     # Add try/except for error handling
     try:
-        slide_elem = news_soup.select_one("ul.item_list li.slide")
-        # Use the parent element to find the first 'a' tag and save it as 'news_title'
-        news_title = slide_elem.find("div", class_="content_title").get_text()
+        slide_elem = news_soup.select_one('ul.item_list li.slide')
+
+        # Use the parent element to find the first a tag and save it as `news_title`
+        news_title = slide_elem.find("div", class_='content_title').get_text()
+
         # Use the parent element to find the paragraph text
-        news_p = slide_elem.find("div", class_="article_teaser_body").get_text()
+        news_p = slide_elem.find('div', class_="article_teaser_body").get_text()
 
     except AttributeError:
         return None, None
-
     return news_title, news_p
 
 
 def featured_image(browser):
     # Visit URL
-    try:
-        PREFIX = "https://web.archive.org/web/20181114023740"
-        url = f'{PREFIX}/https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars'
-        browser.visit(url)
-        article = browser.find_by_tag('article').first['style']
-        article_background = article.split("_/")[1].replace('");',"")
-        return f'{PREFIX}_if/{article_background}'
-    except:
-        return 'https://www.nasa.gov/sites/default/files/styles/full_width_feature/public/thumbnails/image/pia22486-main.jpg'
- 
+    PREFIX = "https://web.archive.org/web/20181114023740"
+    url = f'{PREFIX}/https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars'
+    browser.visit(url)
+
+    #Find and click the full image button
+    full_image_element = browser.find_by_id('full_image')
+    full_image_element.click()
+
+    article = browser.find_by_tag('article').first['style']
+    article_background = article.split("_/")[1].replace('");',"")
+    return f'{PREFIX}_if/{article_background}'
+
 
 def mars_facts():
     # Add try/except for error handling
@@ -82,7 +84,8 @@ def mars_facts():
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     # If running as script, print scraped data
     print(scrape_all())
+
