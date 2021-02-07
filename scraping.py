@@ -18,6 +18,7 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "high_resolution_images": high_resolution_images(browser),
         "last_modified": dt.datetime.now()
     }
     # Stop webdriver and return data
@@ -81,6 +82,52 @@ def mars_facts():
 
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
+
+
+
+#Scrape High-Resolution Mars’ Hemisphere Images and Titles
+
+#Use browser to visit the URL 
+def high_resolution_images(browser):
+
+    #Visit URL
+    url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
+    browser.visit(url)
+
+
+    #list to hold the images links and titles.
+    hemisphere_image_urls = []
+
+    #links = browser.find_by_css('a.product-item h3')
+
+    for i in range(4):
+        #hemisphere = {}
+        browser.find_by_css("a.product-item h3")[i].click()
+        hemi_data = scrape_hemisphere(browser.html)
+        #sample_elem = browser.links.find_by_text("Sample").first
+        #hemisphere["img_url"] = sample_elem["href"]
+        #hemisphere["title"] = browser.find_by_css('h2.title').text
+        hemisphere_image_urls.append(hemi_data)
+        browser.back()
+
+    #print(hemisphere_image_urls)
+
+    #browser.quit()
+    return hemisphere_image_urls
+
+
+def scrape_hemisphere(html_text):
+    hemi_soup = soup(html_text, "html.parser")
+    try:
+        title_elem = hemi_soup.find("h2", class_="title").get_text()
+        sample_elem = hemi_soup.find("a", text="Sample").get("href")
+
+    except AttributeError:
+        title_elem = None
+        sample_elem = None
+
+    hemisphere = {"title": title_elem, "img_url": sample_elem}
+    return hemisphere
 
 if __name__ == "__main__":
 
